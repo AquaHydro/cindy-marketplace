@@ -1,0 +1,115 @@
+{
+  "name": "Medio Gen",
+  "description": "Generate and edit images via a Grok or OpenAI-compatible gateway; Grok also supports video.",
+  "whenToUse": "Use me to generate or edit images, or to generate videos / image-to-video.",
+  "tools": {
+    "grok_status": {
+      "description": "Check Medio Gen configuration: Base URLs, whether keys are saved, selected models, and cached model lists. Does not call a gateway unless refresh is true.",
+      "parameters": {
+        "/properties/refresh": {
+          "description": "If true, GET /v1/models on each channel that already has an API key."
+        }
+      }
+    },
+    "refresh_models": {
+      "description": "GET /v1/models from the chosen channel, store the list in plugin settings, and return it. openai is image-only.",
+      "parameters": {
+        "/properties/provider": {
+          "description": "grok = Grok channel; openai = OpenAI channel."
+        }
+      }
+    },
+    "gen_image": {
+      "description": "Text-to-image. Uses the default image provider from settings unless provider/model is set. OpenAI does not support video. Pass the user’s prompt unchanged.",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "Image description. Pass the user’s words unchanged."
+        },
+        "/properties/provider": {
+          "description": "Only when the user named a channel. grok or openai."
+        },
+        "/properties/model": {
+          "description": "Only when the user named a model in this chat."
+        },
+        "/properties/aspect_ratio": {
+          "description": "Only when the user asked for a specific aspect ratio."
+        }
+      }
+    },
+    "edit_image": {
+      "description": "Edit an image. Pass source images as ghost_call attachments or cindy-media:// URLs. Channel rules match gen_image.",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "How to edit. Pass the user’s words unchanged."
+        },
+        "/properties/images": {
+          "description": "Optional cindy-media:// URLs. If the user attached images, leave this empty."
+        },
+        "/properties/provider": {
+          "description": "Only when the user named a channel."
+        },
+        "/properties/model": {
+          "description": "Only when the user named a model."
+        },
+        "/properties/aspect_ratio": {
+          "description": "Only when the user asked for a specific aspect ratio."
+        }
+      }
+    },
+    "gen_video": {
+      "description": "Text-to-video via the Grok channel only. OpenAI does not support video.",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "Video description. Pass the user’s words unchanged."
+        },
+        "/properties/model": {
+          "description": "Only when the user named a model."
+        },
+        "/properties/aspect_ratio": {
+          "description": "Only when the user asked for a specific aspect ratio."
+        },
+        "/properties/duration": {
+          "description": "Seconds, max 15. Only when the user asked for a duration. Default 6."
+        },
+        "/properties/resolution": {
+          "description": "Only when the user asked for a resolution. Default 720p."
+        }
+      }
+    },
+    "edit_video": {
+      "description": "Image-to-video via the Grok channel only. One image is the first frame; two images are first and last frames.",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "How the image should move. Pass the user’s words unchanged."
+        },
+        "/properties/images": {
+          "description": "Optional cindy-media:// URLs, 1–2 images."
+        },
+        "/properties/model": {
+          "description": "Only when the user named a model."
+        },
+        "/properties/aspect_ratio": {
+          "description": "Only when the user asked for a specific aspect ratio."
+        },
+        "/properties/duration": {
+          "description": "Seconds, max 15. Only when the user asked for a duration. Default 6."
+        },
+        "/properties/resolution": {
+          "description": "Only when the user asked for a resolution. Default 720p."
+        }
+      }
+    }
+  },
+  "node": {
+    "secretBindings": {
+      "api_key": {
+        "label": "Grok API Key",
+        "hint": "API key for the Grok channel."
+      },
+      "openai_key": {
+        "label": "OpenAI API Key",
+        "hint": "API key for the OpenAI channel."
+      }
+    }
+  }
+}

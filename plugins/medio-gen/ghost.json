@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 3,
+  "minCindyVersion": "0.1.79",
+  "id": "medio-gen",
+  "name": "Medio Gen",
+  "description": "用 Grok 或 OpenAI 兼容网关做生图、改图；Grok 通道还支持视频生成。",
+  "whenToUse": "需要生图、改图、文生视频或图生视频时找我。用户说画一张、出图、P图、改图、出视频、让一张图动起来时用。",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "icon": "assets/icon.png",
+  "command": "medio-gen",
+  "launch": "on-demand",
+  "cindy": {
+    "media": ["deposit"]
+  },
+  "settingsHtml": "settings.html",
+  "locales": {
+    "en": "locales/en.json",
+    "zh-CN": "locales/zh-CN.json"
+  },
+  "setup": {
+    "requires": [
+      { "anyOf": ["secret:api_key", "secret:openai_key"] }
+    ]
+  },
+  "node": {
+    "entry": "node/worker.cjs",
+    "protocol": "json-rpc-stdio",
+    "lifecycle": "on-demand",
+    "idleTimeoutSeconds": 180,
+    "secretBindings": [
+      {
+        "key": "api_key",
+        "label": "Grok API Key",
+        "methods": ["media/list_models", "media/generate"],
+        "hint": "Grok 通道的 API Key"
+      },
+      {
+        "key": "openai_key",
+        "label": "OpenAI API Key",
+        "methods": ["media/list_openai", "media/generate_openai"],
+        "hint": "OpenAI 通道的 API Key"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "grok_status",
+      "description": "查询 Medio Gen 配置：各通道的 Base URL、Key 是否已保存、已选模型、缓存的模型列表。默认不访问网关。refresh=true 时会向对应网关 GET /v1/models 刷新列表。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "boolean",
+            "description": "是否立刻向网关拉取模型列表。默认 false。只刷新已保存了 Key 的通道。"
+          }
+        }
+      }
+    },
+    {
+      "name": "refresh_models",
+      "description": "向指定通道的 Base URL 请求 GET /v1/models，把列表写入插件设置并返回。grok 通道会分出生图/视频模型；openai 只用于生图（不支持视频）。需要该通道已保存 API Key。会经本机 Node 工作进程访问设置页里的 HTTPS 网关。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["grok", "openai"],
+            "description": "grok=Grok 通道；openai=OpenAI 通道。"
+          }
+        },
+        "required": ["provider"]
+      }
+    },
+    {
+      "name": "gen_image",
+      "description": "文生图。默认使用设置页「默认生图通道」及该通道已选模型。会经本机 Node 工作进程访问 HTTPS 网关，成品写入 Cindy 媒体库并在聊天中渲染图卡。成功结果含 prompt、provider、model、aspect_ratio、width、height；在最终回复里用一两行复述这些元数据，不要只放图卡。提示词原样透传。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片内容的文字描述（用户原话透传，不要扩写）"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["grok", "openai"],
+            "description": "仅当用户明确指定通道时传。不传则用设置页的默认生图通道；若用户点名了模型，则按模型名推断。"
+          },
+          "model": {
+            "type": "string",
+            "description": "仅当用户在本次对话明确点名模型时传；否则不传，使用该通道在设置页选中的生图模型。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "enum": ["1:1", "16:9", "9:16", "3:2", "2:3", "4:3", "3:4"],
+            "description": "仅当用户明确要求画幅时才传。不传则由网关默认。"
+          }
+        },
+        "required": ["prompt"]
+      }
+    },
+    {
+      "name": "edit_image",
+      "description": "按文字改图。源图必须经 ghost_call 顶层 attachments 交给本插件（或填 images）。通道规则同 gen_image。成功结果含 prompt、model、width、height；在最终回复里用一两行复述元数据。提示词原样透传。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "怎么改（用户原话透传，不要扩写）"
+          },
+          "images": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "maxItems": 4,
+            "description": "可选。完整 cindy-media://blobs/<指纹>.<后缀> 源图地址。只改用户随消息发来的图时不填，走 attachments。"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["grok", "openai"],
+            "description": "仅当用户明确指定通道时传。"
+          },
+          "model": {
+            "type": "string",
+            "description": "仅当用户明确点名模型时传；否则不传。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "enum": ["1:1", "16:9", "9:16", "3:2", "2:3", "4:3", "3:4"],
+            "description": "仅当用户明确要求画幅时才传。"
+          }
+        },
+        "required": ["prompt"]
+      }
+    },
+    {
+      "name": "gen_video",
+      "description": "文生视频，只走 Grok 通道（OpenAI 不支持视频）。会经本机 Node 工作进程向该网关 POST /v1/videos/generations 并轮询。成功结果含 prompt、model、duration_seconds、resolution、aspect_ratio；在最终回复里用一两行复述这些元数据，不要只放视频卡。提示词原样透传。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "视频内容的文字描述（用户原话透传，不要扩写）"
+          },
+          "model": {
+            "type": "string",
+            "description": "仅当用户明确点名模型时传；否则使用设置页选中的 Grok 视频模型。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"],
+            "description": "仅当用户明确要求画幅时才传。"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15,
+            "description": "仅当用户明确要求时长时传，单位秒，最长 15。不传默认 6 秒。"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": ["480p", "720p", "1080p"],
+            "description": "仅当用户明确要求分辨率时传。不传默认 720p。"
+          }
+        },
+        "required": ["prompt"]
+      }
+    },
+    {
+      "name": "edit_video",
+      "description": "图生视频，只走 Grok 通道（OpenAI 不支持视频）。1 张参考图当首帧，2 张表示首尾帧。成功结果含 prompt、model、duration_seconds、resolution；在最终回复里用一两行复述元数据。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "想让画面怎么动（用户原话透传，不要扩写）"
+          },
+          "images": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "maxItems": 2,
+            "description": "可选。完整 cindy-media:// 地址，1–2 张。只用用户发来的图时不填，走 attachments。"
+          },
+          "model": {
+            "type": "string",
+            "description": "仅当用户明确点名模型时传；否则不传。"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"],
+            "description": "仅当用户明确要求画幅时才传。"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15,
+            "description": "仅当用户明确要求时长时传，单位秒，最长 15。不传默认 6 秒。"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": ["480p", "720p", "1080p"],
+            "description": "仅当用户明确要求分辨率时传。不传默认 720p。"
+          }
+        },
+        "required": ["prompt"]
+      }
+    }
+  ]
+}

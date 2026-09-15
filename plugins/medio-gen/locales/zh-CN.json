@@ -1,0 +1,115 @@
+{
+  "name": "Medio Gen",
+  "description": "用 Grok 或 OpenAI 兼容网关做生图、改图；Grok 通道还支持视频生成。",
+  "whenToUse": "需要生图、改图、文生视频或图生视频时找我。用户说画一张、出图、P图、改图、出视频、让一张图动起来时用。",
+  "tools": {
+    "grok_status": {
+      "description": "查询 Medio Gen 配置：各通道的 Base URL、Key 是否已保存、已选模型、缓存的模型列表。默认不访问网关。refresh=true 时会向对应网关 GET /v1/models 刷新列表。",
+      "parameters": {
+        "/properties/refresh": {
+          "description": "是否立刻向网关拉取模型列表。默认 false。只刷新已保存了 Key 的通道。"
+        }
+      }
+    },
+    "refresh_models": {
+      "description": "向指定通道的 Base URL 请求 GET /v1/models，把列表写入插件设置并返回。openai 只用于生图（不支持视频）。",
+      "parameters": {
+        "/properties/provider": {
+          "description": "grok=Grok 通道；openai=OpenAI 通道。"
+        }
+      }
+    },
+    "gen_image": {
+      "description": "文生图。默认使用设置页「默认生图通道」及该通道已选模型。成功结果含 prompt、model、width、height；在最终回复里用一两行复述元数据。提示词原样透传。",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "图片内容的文字描述（用户原话透传，不要扩写）"
+        },
+        "/properties/provider": {
+          "description": "仅当用户明确指定通道时传。grok 或 openai。"
+        },
+        "/properties/model": {
+          "description": "仅当用户在本次对话明确点名模型时传。"
+        },
+        "/properties/aspect_ratio": {
+          "description": "仅当用户明确要求画幅时才传。"
+        }
+      }
+    },
+    "edit_image": {
+      "description": "按文字改图。源图经 attachments 或 images 交付。通道规则同 gen_image。",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "怎么改（用户原话透传，不要扩写）"
+        },
+        "/properties/images": {
+          "description": "可选。完整 cindy-media:// 地址。只改用户随消息发来的图时不填，走 attachments。"
+        },
+        "/properties/provider": {
+          "description": "仅当用户明确指定通道时传。"
+        },
+        "/properties/model": {
+          "description": "仅当用户明确点名模型时传。"
+        },
+        "/properties/aspect_ratio": {
+          "description": "仅当用户明确要求画幅时才传。"
+        }
+      }
+    },
+    "gen_video": {
+      "description": "文生视频，只走 Grok 通道。成功结果含 prompt、model、duration_seconds、resolution；在最终回复里用一两行复述元数据。",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "视频内容的文字描述（用户原话透传，不要扩写）"
+        },
+        "/properties/model": {
+          "description": "仅当用户明确点名模型时传。"
+        },
+        "/properties/aspect_ratio": {
+          "description": "仅当用户明确要求画幅时才传。"
+        },
+        "/properties/duration": {
+          "description": "仅当用户明确要求时长时传，单位秒，最长 15。不传默认 6 秒。"
+        },
+        "/properties/resolution": {
+          "description": "仅当用户明确要求分辨率时传。不传默认 720p。"
+        }
+      }
+    },
+    "edit_video": {
+      "description": "图生视频，只走 Grok 通道（OpenAI 不支持视频）。1 张参考图当首帧，2 张表示首尾帧。",
+      "parameters": {
+        "/properties/prompt": {
+          "description": "想让画面怎么动（用户原话透传，不要扩写）"
+        },
+        "/properties/images": {
+          "description": "可选。完整 cindy-media:// 地址，1–2 张。"
+        },
+        "/properties/model": {
+          "description": "仅当用户明确点名模型时传。"
+        },
+        "/properties/aspect_ratio": {
+          "description": "仅当用户明确要求画幅时才传。"
+        },
+        "/properties/duration": {
+          "description": "仅当用户明确要求时长时传，单位秒，最长 15。不传默认 6 秒。"
+        },
+        "/properties/resolution": {
+          "description": "仅当用户明确要求分辨率时传。不传默认 720p。"
+        }
+      }
+    }
+  },
+  "node": {
+    "secretBindings": {
+      "api_key": {
+        "label": "Grok API Key",
+        "hint": "Grok 通道的 API Key"
+      },
+      "openai_key": {
+        "label": "OpenAI API Key",
+        "hint": "OpenAI 通道的 API Key"
+      }
+    }
+  }
+}

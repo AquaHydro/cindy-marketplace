@@ -1,0 +1,9 @@
+{
+  "name": "cindy-marketplace",
+  "plugins": [
+    {
+      "name": "medio-gen",
+      "source": "plugins/medio-gen"
+    }
+  ]
+}

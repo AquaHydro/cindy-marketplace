@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check
+        run: |
+          node --check plugins/medio-gen/node/worker.cjs
+          node --check plugins/medio-gen/node/net-policy.cjs
+          node --check plugins/medio-gen/main.js
+          node --test plugins/medio-gen/tests/net-policy.test.cjs
+          node scripts/validate-marketplace.cjs
+      - name: Pack source zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          ghost = json.loads(Path("plugins/medio-gen/ghost.json").read_text())
+          tag = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          if ghost.get("version") != tag:
+              raise SystemExit(f"tag {tag} != ghost.json version {ghost.get('version')}")
+          PY
+          (cd plugins && zip -r "../dist/medio-gen-${VERSION}.zip" medio-gen \
+            -x "*.cindy" -x "**/.DS_Store")
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*.zip

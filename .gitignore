@@ -1,0 +1,4 @@
+.DS_Store
+*.cindy
+node_modules/
+dist/

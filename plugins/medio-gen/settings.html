@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/settings.css">
+<body>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab" id="tab-grok" role="tab" aria-selected="true" aria-controls="panel-grok">
+      <span class="tab-icon" data-brand="xai"></span>
+      <span id="grok-tab-label">Grok</span>
+    </button>
+    <button type="button" class="tab" id="tab-openai" role="tab" aria-selected="false" aria-controls="panel-openai">
+      <span class="tab-icon" data-brand="openai"></span>
+      <span id="openai-tab-label">OpenAI</span>
+    </button>
+  </div>
+
+  <section id="panel-grok" class="panel" role="tabpanel">
+    <label id="base-label"></label>
+    <input id="baseUrl" spellcheck="false" placeholder="https://">
+    <label class="mt" id="key-label"></label>
+    <div class="secret-box">
+      <input id="apiKey" type="password" autocomplete="off" spellcheck="false">
+      <button type="button" class="toggle-vis" id="toggle-grok-key"></button>
+      <button type="button" class="linkish" id="clear-grok"></button>
+    </div>
+    <label class="mt" id="image-label"></label>
+    <div class="picker" id="image-picker"></div>
+    <input type="hidden" id="imageModel">
+    <label class="mt" id="video-label"></label>
+    <div class="picker" id="video-picker"></div>
+    <input type="hidden" id="videoModel">
+    <label class="default-row">
+      <input type="checkbox" id="default-grok">
+      <span id="default-grok-label"></span>
+    </label>
+    <div class="row">
+      <button id="fetch-grok" class="action" type="button"></button>
+      <button id="save-grok" class="ghost" type="button"></button>
+    </div>
+    <p id="status-grok" class="status"></p>
+  </section>
+
+  <section id="panel-openai" class="panel" role="tabpanel" hidden>
+    <label id="openai-base-label"></label>
+    <input id="openaiBaseUrl" spellcheck="false" placeholder="https://">
+    <label class="mt" id="openai-key-label"></label>
+    <div class="secret-box">
+      <input id="openaiKey" type="password" autocomplete="off" spellcheck="false">
+      <button type="button" class="toggle-vis" id="toggle-openai-key"></button>
+      <button type="button" class="linkish" id="clear-openai"></button>
+    </div>
+    <label class="mt" id="openai-image-label"></label>
+    <div class="picker" id="openai-image-picker"></div>
+    <input type="hidden" id="openaiImageModel">
+    <label class="default-row">
+      <input type="checkbox" id="default-openai">
+      <span id="default-openai-label"></span>
+    </label>
+    <div class="row">
+      <button id="fetch-openai" class="action" type="button"></button>
+      <button id="save-openai" class="ghost" type="button"></button>
+    </div>
+    <p id="status-openai" class="status"></p>
+  </section>
+  <script src="/settings.js"></script>
+</body>

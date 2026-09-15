@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check plugins/medio-gen/node/worker.cjs
+          node --check plugins/medio-gen/node/net-policy.cjs
+          node --check plugins/medio-gen/main.js
+      - name: Tests
+        run: node --test plugins/medio-gen/tests/net-policy.test.cjs
+      - name: Marketplace
+        run: node scripts/validate-marketplace.cjs
