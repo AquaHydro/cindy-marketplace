@@ -22,22 +22,53 @@ jobs:
           node --check plugins/medio-gen/main.js
           node --test plugins/medio-gen/tests/net-policy.test.cjs
           node scripts/validate-marketplace.cjs
-      - name: Pack source zip
+      - name: Pack installable plugins
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          ghost = json.loads(Path("plugins/medio-gen/ghost.json").read_text())
-          tag = os.environ["GITHUB_REF_NAME"].lstrip("v")
-          if ghost.get("version") != tag:
-              raise SystemExit(f"tag {tag} != ghost.json version {ghost.get('version')}")
-          PY
-          (cd plugins && zip -r "../dist/medio-gen-${VERSION}.zip" medio-gen \
-            -x "*.cindy" -x "**/.DS_Store")
+          PACK_LIST="$RUNNER_TEMP/cindy-marketplace-pack-list"
+          node <<'NODE' > "$PACK_LIST"
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = fs.realpathSync(process.cwd());
+          const marketplace = JSON.parse(
+            fs.readFileSync(path.join(root, '.agents/plugins/marketplace.json'), 'utf8'),
+          );
+          const artifacts = new Set();
+
+          for (const entry of marketplace.plugins) {
+            const source = typeof entry.source === 'string' ? entry.source : entry.source?.path;
+            if (!source) throw new Error(`plugin ${entry.name} is missing source`);
+
+            const sourceDir = fs.realpathSync(path.resolve(root, source));
+            const relativeSource = path.relative(root, sourceDir);
+            if (!relativeSource || relativeSource.startsWith(`..${path.sep}`) || path.isAbsolute(relativeSource)) {
+              throw new Error(`plugin ${entry.name} source must stay inside the repository`);
+            }
+
+            const ghost = JSON.parse(fs.readFileSync(path.join(sourceDir, 'ghost.json'), 'utf8'));
+            const artifact = `${ghost.id}-${ghost.version}.cindy`;
+            if (artifact !== path.basename(artifact) || /[\0\r\n\t]/.test(artifact)) {
+              throw new Error(`plugin ${entry.name} has an unsafe id or version`);
+            }
+            if (artifacts.has(artifact)) throw new Error(`duplicate release artifact ${artifact}`);
+            artifacts.add(artifact);
+            process.stdout.write(`${sourceDir}\t${artifact}\n`);
+          }
+          NODE
+
+          while IFS=$'\t' read -r source_dir artifact; do
+            (
+              cd "$source_dir"
+              zip -r "$GITHUB_WORKSPACE/dist/$artifact" . \
+                -x '*.cindy' '*/.*' '.*' '*/.DS_Store'
+            )
+          done < "$PACK_LIST"
+
+          test "$(find dist -maxdepth 1 -type f -name '*.cindy' | wc -l | tr -d ' ')" \
+            -eq "$(wc -l < "$PACK_LIST" | tr -d ' ')"
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: dist/*.zip
+          files: dist/*.cindy
