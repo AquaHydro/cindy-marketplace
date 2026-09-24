@@ -16,6 +16,8 @@ Cindy 插件：通过用户自备的 **HTTPS** 网关做生图 / 改图，Grok �
 | OpenAI | 改图 | 一次 `POST /v1/images/edits` |
 | OpenAI | 视频 | 不支持 |
 
+OpenAI 通道额外支持 `size`（任意 `宽x高`）、`quality`、`background`、`output_format`，原样透传给网关。gpt-image-2 系列的 `size` 会先在本地按官方规则校验（宽高是 16 的倍数、最长边 ≤3840、长短边比 ≤3:1、总像素 655,360–8,294,400），不合规就不发付费请求。
+
 `GET /v1/models` 只展示名称像图片/视频的模型，**不会**补全未出现在列表里的型号。
 
 ## 安全边界
@@ -29,8 +31,9 @@ Cindy 插件：通过用户自备的 **HTTPS** 网关做生图 / 改图，Grok �
 ```bash
 node --check node/worker.cjs
 node --check node/net-policy.cjs
+node --check node/openai-size.cjs
 node --check main.js
-node --test tests/net-policy.test.cjs
+node --test tests/
 ```
 
 在 Cindy 中用 `ghost_forge_pack` / `ghost_forge_install` 打包。源码 `assets/icon.png` 必须是最终图标，不要依赖打包时临时 `icon_source`。

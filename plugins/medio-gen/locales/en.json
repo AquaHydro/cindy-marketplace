@@ -33,6 +33,18 @@
         },
         "/properties/aspect_ratio": {
           "description": "Only when the user asked for a specific aspect ratio."
+        },
+        "/properties/size": {
+          "description": "OpenAI channel only. Pass when the user asks for exact pixel dimensions, as WIDTHxHEIGHT such as 1920x1088; overrides aspect_ratio. gpt-image-2 models accept any size where both edges are multiples of 16, the longest edge is at most 3840, the edge ratio is at most 3:1, and total pixels are 655,360 to 8,294,400; above 2560x1440 is experimental. If the requested size breaks a rule, round to the nearest valid one and say so. Older models only take 1024x1024 / 1536x1024 / 1024x1536."
+        },
+        "/properties/quality": {
+          "description": "OpenAI channel only. Pass when the user asks for a quality or speed level. xhigh and max are gpt-image-2.5 only."
+        },
+        "/properties/background": {
+          "description": "OpenAI channel only. Pass transparent for cutouts, stickers or icons, together with output_format png or webp."
+        },
+        "/properties/output_format": {
+          "description": "OpenAI channel only. Pass when the user asks for a file format; default png. jpeg has no transparency."
         }
       }
     },
@@ -53,6 +65,18 @@
         },
         "/properties/aspect_ratio": {
           "description": "Only when the user asked for a specific aspect ratio."
+        },
+        "/properties/size": {
+          "description": "OpenAI channel only. Pass when the user asks for exact pixel dimensions, as WIDTHxHEIGHT such as 1920x1088; overrides aspect_ratio. gpt-image-2 models accept any size where both edges are multiples of 16, the longest edge is at most 3840, the edge ratio is at most 3:1, and total pixels are 655,360 to 8,294,400; above 2560x1440 is experimental. If the requested size breaks a rule, round to the nearest valid one and say so. Older models only take 1024x1024 / 1536x1024 / 1024x1536."
+        },
+        "/properties/quality": {
+          "description": "OpenAI channel only. Pass when the user asks for a quality or speed level. xhigh and max are gpt-image-2.5 only."
+        },
+        "/properties/background": {
+          "description": "OpenAI channel only. Pass transparent for cutouts, stickers or icons, together with output_format png or webp."
+        },
+        "/properties/output_format": {
+          "description": "OpenAI channel only. Pass when the user asks for a file format; default png. jpeg has no transparency."
         }
       }
     },

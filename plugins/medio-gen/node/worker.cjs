@@ -11,6 +11,7 @@ const {
   downloadAuthHeader,
   paidMethodRetries,
 } = require('./net-policy.cjs');
+const { openaiSizeError } = require('./openai-size.cjs');
 
 const DEFAULT_GROK_BASE = '';
 const DEFAULT_OPENAI_BASE = '';
@@ -235,6 +236,15 @@ function readImageSize(buf) {
       i += 2 + len;
     }
   }
+  if (buf.slice(0, 4).toString('ascii') === 'RIFF' && buf.slice(8, 12).toString('ascii') === 'WEBP' && buf.length >= 30) {
+    const chunk = buf.slice(12, 16).toString('ascii');
+    if (chunk === 'VP8X') return { width: buf.readUIntLE(24, 3) + 1, height: buf.readUIntLE(27, 3) + 1 };
+    if (chunk === 'VP8 ') return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+    if (chunk === 'VP8L') {
+      const bits = buf.readUInt32LE(21);
+      return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+    }
+  }
   return { width: 0, height: 0 };
 }
 
@@ -331,6 +341,12 @@ function openaiSize(model, aspect) {
   const landscape = aspect === '16:9' || aspect === '3:2' || aspect === '4:3';
   const portrait = aspect === '9:16' || aspect === '2:3' || aspect === '3:4';
   if (m.indexOf('dall-e-2') !== -1 || m.indexOf('dalle-2') !== -1) return '1024x1024';
+  if (m.indexOf('gpt-image-2') !== -1) {
+    return {
+      '1:1': '1024x1024', '16:9': '1536x864', '9:16': '864x1536', '3:2': '1536x1024',
+      '2:3': '1024x1536', '4:3': '1280x960', '3:4': '960x1280',
+    }[aspect] || '1024x1024';
+  }
   if (m.indexOf('gpt-image') !== -1) {
     if (landscape) return '1536x1024';
     if (portrait) return '1024x1536';
@@ -366,11 +382,18 @@ function buildMultipart(fields, files) {
 async function generateOpenAIImage(base, key, params, sourceBufs) {
   const model = (params.model || DEFAULT_OPENAI_IMAGE).trim();
   const prompt = String(params.prompt || '');
-  const size = openaiSize(model, params.aspect_ratio);
+  const size = params.size || openaiSize(model, params.aspect_ratio);
+  const sizeError = openaiSizeError(model, size);
+  if (sizeError) throw new Error(sizeError);
+  const options = {
+    quality: params.quality,
+    background: params.background,
+    output_format: params.output_format,
+  };
+  if (size) options.size = size;
 
   if (sourceBufs.length) {
-    const fields = { model: model, prompt: prompt };
-    if (size) fields.size = size;
+    const fields = Object.assign({ model: model, prompt: prompt }, options);
     const files = sourceBufs.slice(0, 4).map(function (buf, index) {
       const mime = sniffMime(buf);
       return {
@@ -398,7 +421,9 @@ async function generateOpenAIImage(base, key, params, sourceBufs) {
   }
 
   const body = { model: model, prompt: prompt };
-  if (size) body.size = size;
+  Object.keys(options).forEach(function (name) {
+    if (options[name]) body[name] = options[name];
+  });
   if (/dall-e/i.test(model)) body.response_format = 'b64_json';
   const payload = await withHeartbeat('image', function () {
     return jsonRequest(base + '/images/generations', key, body, 180000);

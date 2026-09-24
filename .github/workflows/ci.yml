@@ -17,8 +17,9 @@ jobs:
         run: |
           node --check plugins/medio-gen/node/worker.cjs
           node --check plugins/medio-gen/node/net-policy.cjs
+          node --check plugins/medio-gen/node/openai-size.cjs
           node --check plugins/medio-gen/main.js
       - name: Tests
-        run: node --test plugins/medio-gen/tests/net-policy.test.cjs
+        run: node --test plugins/medio-gen/tests/
       - name: Marketplace
         run: node scripts/validate-marketplace.cjs

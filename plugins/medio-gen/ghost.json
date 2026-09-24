@@ -5,7 +5,7 @@
   "name": "Medio Gen",
   "description": "用 Grok 或 OpenAI 兼容网关做生图、改图；Grok 通道还支持视频生成。",
   "whenToUse": "需要生图、改图、文生视频或图生视频时找我。用户说画一张、出图、P图、改图、出视频、让一张图动起来时用。",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entry": "main.js",
   "icon": "assets/icon.png",
   "command": "medio-gen",
@@ -74,7 +74,7 @@
     },
     {
       "name": "gen_image",
-      "description": "文生图。默认使用设置页「默认生图通道」及该通道已选模型。会经本机 Node 工作进程访问 HTTPS 网关，成品写入 Cindy 媒体库并在聊天中渲染图卡。成功结果含 prompt、provider、model、aspect_ratio、width、height；在最终回复里用一两行复述这些元数据，不要只放图卡。提示词原样透传。",
+      "description": "文生图。默认使用设置页「默认生图通道」及该通道已选模型。会经本机 Node 工作进程访问 HTTPS 网关，成品写入 Cindy 媒体库并在聊天中渲染图卡。成功结果含 prompt、provider、model、aspect_ratio、width、height，以及用户指定的 size、quality、background、output_format；在最终回复里用一两行复述这些元数据，不要只放图卡。提示词原样透传。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -95,6 +95,26 @@
             "type": "string",
             "enum": ["1:1", "16:9", "9:16", "3:2", "2:3", "4:3", "3:4"],
             "description": "仅当用户明确要求画幅时才传。不传则由网关默认。"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^(auto|[0-9]+x[0-9]+)$",
+            "description": "仅 OpenAI 通道。用户要求具体分辨率（像素）时传，格式 宽x高，如 1920x1088；传了就忽略 aspect_ratio。gpt-image-2 系列支持任意尺寸，但宽高都要是 16 的倍数、最长边 ≤3840、长短边比 ≤3:1、总像素 655,360–8,294,400；超过 2560x1440 属实验性。用户给的数不满足时，就近取满足的值并在回复里说明。旧模型只支持 1024x1024 / 1536x1024 / 1024x1536。"
+          },
+          "quality": {
+            "type": "string",
+            "enum": ["auto", "low", "medium", "high", "xhigh", "max"],
+            "description": "仅 OpenAI 通道。用户明确要求画质/速度时传。xhigh、max 只有 gpt-image-2.5 系列支持。"
+          },
+          "background": {
+            "type": "string",
+            "enum": ["auto", "opaque", "transparent"],
+            "description": "仅 OpenAI 通道。用户要透明背景（抠图、贴纸、图标）时传 transparent，并配 output_format=png 或 webp。"
+          },
+          "output_format": {
+            "type": "string",
+            "enum": ["png", "jpeg", "webp"],
+            "description": "仅 OpenAI 通道。用户明确要求文件格式时传；默认 png。jpeg 不支持透明。"
           }
         },
         "required": ["prompt"]
@@ -102,7 +122,7 @@
     },
     {
       "name": "edit_image",
-      "description": "按文字改图。源图必须经 ghost_call 顶层 attachments 交给本插件（或填 images）。通道规则同 gen_image。成功结果含 prompt、model、width、height；在最终回复里用一两行复述元数据。提示词原样透传。",
+      "description": "按文字改图。源图必须经 ghost_call 顶层 attachments 交给本插件（或填 images）。通道规则同 gen_image。成功结果含 prompt、model、width、height，以及用户指定的 size、quality、background、output_format；在最终回复里用一两行复述元数据。提示词原样透传。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -130,6 +150,26 @@
             "type": "string",
             "enum": ["1:1", "16:9", "9:16", "3:2", "2:3", "4:3", "3:4"],
             "description": "仅当用户明确要求画幅时才传。"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^(auto|[0-9]+x[0-9]+)$",
+            "description": "仅 OpenAI 通道。用户要求具体分辨率（像素）时传，格式 宽x高，如 1920x1088；传了就忽略 aspect_ratio。gpt-image-2 系列支持任意尺寸，但宽高都要是 16 的倍数、最长边 ≤3840、长短边比 ≤3:1、总像素 655,360–8,294,400；超过 2560x1440 属实验性。用户给的数不满足时，就近取满足的值并在回复里说明。旧模型只支持 1024x1024 / 1536x1024 / 1024x1536。"
+          },
+          "quality": {
+            "type": "string",
+            "enum": ["auto", "low", "medium", "high", "xhigh", "max"],
+            "description": "仅 OpenAI 通道。用户明确要求画质/速度时传。xhigh、max 只有 gpt-image-2.5 系列支持。"
+          },
+          "background": {
+            "type": "string",
+            "enum": ["auto", "opaque", "transparent"],
+            "description": "仅 OpenAI 通道。用户要透明背景（抠图、贴纸、图标）时传 transparent，并配 output_format=png 或 webp。"
+          },
+          "output_format": {
+            "type": "string",
+            "enum": ["png", "jpeg", "webp"],
+            "description": "仅 OpenAI 通道。用户明确要求文件格式时传；默认 png。jpeg 不支持透明。"
           }
         },
         "required": ["prompt"]

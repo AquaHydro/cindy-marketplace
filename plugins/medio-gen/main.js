@@ -10,6 +10,7 @@ const MEDIA_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm'];
 const PUT_CHUNK = 80 * 1024;
 const READ_CHUNK = 180 * 1024;
 const CHANNEL = new BroadcastChannel('medio-gen');
+const OPENAI_ONLY_ARGS = ['size', 'quality', 'background', 'output_format'];
 
 function failCall(callId, message) {
   return cindy.send({
@@ -342,6 +343,14 @@ async function handleGenerate(msg) {
   }
 
   const isOpenAI = provider === 'openai';
+  const openaiOnly = OPENAI_ONLY_ARGS.filter(function (name) { return optionalString(args, name); });
+  if (!isOpenAI && openaiOnly.length) {
+    await failCall(
+      msg.callId,
+      openaiOnly.join('、') + ' 只有 OpenAI 通道支持。请传 provider=openai，或在 Grok 通道改用 aspect_ratio。',
+    );
+    return;
+  }
   const baseUrl = isOpenAI ? (kv.openaiBaseUrl || '') : (kv.baseUrl || '');
   if (!baseUrl.trim()) {
     await failCall(msg.callId, '请先在设置页填写该通道的网关 Base URL。');
@@ -370,6 +379,10 @@ async function handleGenerate(msg) {
         aspect_ratio: optionalString(args, 'aspect_ratio'),
         duration: args.duration,
         resolution: optionalString(args, 'resolution'),
+        size: optionalString(args, 'size'),
+        quality: optionalString(args, 'quality'),
+        background: optionalString(args, 'background'),
+        output_format: optionalString(args, 'output_format'),
         baseUrl: baseUrl,
         sourceIds: sourceIds,
       },
@@ -396,6 +409,7 @@ async function handleGenerate(msg) {
       mime: result.mime,
     };
     if (aspect) payload.aspect_ratio = aspect;
+    openaiOnly.forEach(function (name) { payload[name] = optionalString(args, name); });
     if (result.width) payload.width = result.width;
     if (result.height) payload.height = result.height;
     if (kind === 'video') {

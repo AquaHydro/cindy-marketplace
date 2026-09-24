@@ -33,6 +33,18 @@
         },
         "/properties/aspect_ratio": {
           "description": "仅当用户明确要求画幅时才传。"
+        },
+        "/properties/size": {
+          "description": "仅 OpenAI 通道。用户要求具体分辨率（像素）时传，格式 宽x高，如 1920x1088；传了就忽略 aspect_ratio。gpt-image-2 系列支持任意尺寸，但宽高都要是 16 的倍数、最长边 ≤3840、长短边比 ≤3:1、总像素 655,360–8,294,400；超过 2560x1440 属实验性。用户给的数不满足时，就近取满足的值并在回复里说明。旧模型只支持 1024x1024 / 1536x1024 / 1024x1536。"
+        },
+        "/properties/quality": {
+          "description": "仅 OpenAI 通道。用户明确要求画质/速度时传。xhigh、max 只有 gpt-image-2.5 系列支持。"
+        },
+        "/properties/background": {
+          "description": "仅 OpenAI 通道。用户要透明背景（抠图、贴纸、图标）时传 transparent，并配 output_format=png 或 webp。"
+        },
+        "/properties/output_format": {
+          "description": "仅 OpenAI 通道。用户明确要求文件格式时传；默认 png。jpeg 不支持透明。"
         }
       }
     },
@@ -53,6 +65,18 @@
         },
         "/properties/aspect_ratio": {
           "description": "仅当用户明确要求画幅时才传。"
+        },
+        "/properties/size": {
+          "description": "仅 OpenAI 通道。用户要求具体分辨率（像素）时传，格式 宽x高，如 1920x1088；传了就忽略 aspect_ratio。gpt-image-2 系列支持任意尺寸，但宽高都要是 16 的倍数、最长边 ≤3840、长短边比 ≤3:1、总像素 655,360–8,294,400；超过 2560x1440 属实验性。用户给的数不满足时，就近取满足的值并在回复里说明。旧模型只支持 1024x1024 / 1536x1024 / 1024x1536。"
+        },
+        "/properties/quality": {
+          "description": "仅 OpenAI 通道。用户明确要求画质/速度时传。xhigh、max 只有 gpt-image-2.5 系列支持。"
+        },
+        "/properties/background": {
+          "description": "仅 OpenAI 通道。用户要透明背景（抠图、贴纸、图标）时传 transparent，并配 output_format=png 或 webp。"
+        },
+        "/properties/output_format": {
+          "description": "仅 OpenAI 通道。用户明确要求文件格式时传；默认 png。jpeg 不支持透明。"
         }
       }
     },
