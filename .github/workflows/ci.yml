@@ -20,6 +20,6 @@ jobs:
           node --check plugins/medio-gen/node/openai-size.cjs
           node --check plugins/medio-gen/main.js
       - name: Tests
-        run: node --test plugins/medio-gen/tests/
+        run: node --test plugins/medio-gen/tests/*.test.cjs
       - name: Marketplace
         run: node scripts/validate-marketplace.cjs

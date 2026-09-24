@@ -33,7 +33,7 @@ node --check node/worker.cjs
 node --check node/net-policy.cjs
 node --check node/openai-size.cjs
 node --check main.js
-node --test tests/
+node --test tests/*.test.cjs
 ```
 
 在 Cindy 中用 `ghost_forge_pack` / `ghost_forge_install` 打包。源码 `assets/icon.png` 必须是最终图标，不要依赖打包时临时 `icon_source`。

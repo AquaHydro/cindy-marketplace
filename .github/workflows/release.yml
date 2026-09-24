@@ -21,7 +21,7 @@ jobs:
           node --check plugins/medio-gen/node/net-policy.cjs
           node --check plugins/medio-gen/node/openai-size.cjs
           node --check plugins/medio-gen/main.js
-          node --test plugins/medio-gen/tests/
+          node --test plugins/medio-gen/tests/*.test.cjs
           node scripts/validate-marketplace.cjs
       - name: Pack installable plugins
         run: |
